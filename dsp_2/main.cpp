@@ -73,25 +73,32 @@ void Matrix_1_to_2(File_info *info);
 
 void Matrix_2_to_1(File_info *info);
 
-void init_output(File_info *change);
+void init_output(File_info *change, File_info *info, int height, int width);
 
-
+void inter()
 void main()
 {
 	File_info ming, change;
-	ReadBmp(&ming);
-	Matrix_1_to_2(&ming);
 
+	if (ReadBmp(&ming) == 1)
+	{
+		printf("읽기 완료");
+	}
 
+	init_output(&change, &ming, 1024, 1024);
 
+	
+	//Matrix_1_to_2(&ming);
+	
 	//Matrix_2_to_1(&ming);
 
 }
 
 
+
 unsigned char ReadBmp(File_info *info)
 {
-
+	
 
 	FILE *fpBmp = fopen("lena.bmp", "rb");    // 비트맵 파일을 바이너리 모드('b')로 열기 
 	if (fpBmp == NULL) {// 파일 열기에 실패하면
@@ -163,10 +170,9 @@ unsigned char ReadBmp(File_info *info)
 		info->twoD[i] = (unsigned char*)malloc(sizeof(unsigned char*)*info->width);
 	}
 
-	// 1차 동적할당 free 해주기!!!!!!!!!!!!!!
 	fclose(fpBmp);    // 비트맵 파일 닫기
 
-
+	return 1;
 
 
 }
@@ -203,6 +209,7 @@ unsigned char WriteBmp(File_info *info)
 	fwrite(info->image, sizeof(unsigned char), info->infoHeader.biSizeImage, outfile2); // 영상데이터입력
 																						// 파일 내용에 출력할 메모리, 데이터 하나의 크기, 쓸 데이터 갯수, 내용이 쓰여질 파일 포인터
 																						//free(info->image);      // 픽셀 데이터를 저장한 동적 메모리 해제
+	/////free
 
 	return 0;
 }
@@ -239,7 +246,43 @@ void Matrix_2_to_1(File_info *info)
 	}
 }
 
-void init_output(File_info *change) {
+void init_output(File_info *change, File_info *info ,int height ,int width) // 1024*1024
+{
+	
+	change->fileHeader.bfType = info->fileHeader.bfType;
+	change->fileHeader.bfSize = height*width * 3 + 138;
+	change->fileHeader.bfReserved1 = info->fileHeader.bfReserved1;
+	change->fileHeader.bfReserved2 = info->fileHeader.bfReserved2;
+	change->fileHeader.bfOffBits = info->fileHeader.bfOffBits;
+
+	change->infoHeader.biSize = info->infoHeader.biSize;
+	change->infoHeader.biWidth = width;
+	change->infoHeader.biHeight = height;
+	change->infoHeader.biPlanes = 1;	// 사용하는 색상판의 수로 항상 1이다.
+	change->infoHeader.biBitCount = 24;	// 3byte=24bit
+	change->infoHeader.biCompression = 0;
+	change->infoHeader.biSizeImage = width*height*3;
+	change->infoHeader.biXPelsPerMeter = 2834; //모름
+	change->infoHeader.biYPelsPerMeter = 2834; //모름
+	change->infoHeader.biClrUsed = 0;
+	change->infoHeader.biClrImportant = 0;
+
+
+	change->width = width;	
+	change->height = height;
+	change->padding = (PIXEL_ALIGN - ((width * PIXEL_SIZE) % PIXEL_ALIGN)) % PIXEL_ALIGN;
+	change->size = change->infoHeader.biSizeImage;
+
+	change->image = (unsigned char*)malloc(change->size);    // 픽셀 데이터의 크기만큼 동적 할당
+
+	change->twoD = (unsigned char**)malloc(sizeof(unsigned char*)*change->height);
+	for (int i = 0; i < change->height; i++)
+	{
+		change->twoD[i] = (unsigned char*)malloc(sizeof(unsigned char*)*change->width);
+	}
+
+	
+
 }
 
 
